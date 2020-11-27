@@ -13,11 +13,32 @@
       "unicode_decimal": 58919
     },
     {
+      "icon_id": "10064262",
+      "name": "菠萝",
+      "font_class": "boluo",
+      "unicode": "e8d6",
+      "unicode_decimal": 59606
+    },
+    {
       "icon_id": "11177997",
       "name": "用户",
       "font_class": "ziyuan",
       "unicode": "e646",
       "unicode_decimal": 58950
+    },
+    {
+      "icon_id": "15685569",
+      "name": "按钮_箭头向左",
+      "font_class": "anniu_jiantouxiangzuo",
+      "unicode": "e6e6",
+      "unicode_decimal": 59110
+    },
+    {
+      "icon_id": "15685594",
+      "name": "按钮-箭头向右",
+      "font_class": "anniu-jiantouxiangyou",
+      "unicode": "e6ec",
+      "unicode_decimal": 59116
     }
   ]
 }
