@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- 面包屑导航 -->
     <el-breadcrumb separator="/">
       <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
       <el-breadcrumb-item>用户管理</el-breadcrumb-item>
@@ -73,8 +74,38 @@
               type="info"
               icon="el-icon-setting"
               size="mini"
+              @click="setUserEditDialogVistible(scope.row)"
             ></el-button>
           </el-tooltip>
+          <!-- 设置用户提示框 -->
+          <el-dialog
+            title="提示"
+            :visible.sync="userEditdialogVisible"
+            width="50%"
+            @closed="cleanRolesList"
+          >
+            <div>
+              <p>{{ userInfo.username }}</p>
+              <p>{{ userInfo.role_name }}</p>
+              <el-select v-model="rolesListValueID" placeholder="请选择">
+                <el-option
+                  v-for="item in rolesList"
+                  :key="item.id"
+                  :label="item.roleName"
+                  :value="item.id"
+                >
+                </el-option>
+              </el-select>
+            </div>
+            <span slot="footer" class="dialog-footer">
+              <el-button @click="userEditdialogVisible = false"
+                >取 消</el-button
+              >
+              <el-button type="primary" @click="userEditdialogSub"
+                >确 定</el-button
+              >
+            </span>
+          </el-dialog>
         </template>
       </el-table-column>
     </el-table>
@@ -214,7 +245,14 @@ export default {
           { required: true, message: '请输入手机号', trigger: 'blur' },
           { validator: checkPhone, trigger: 'blur' }
         ]
-      }
+      },
+      // 设置用户框开关
+      userEditdialogVisible: false,
+      // 用户信息
+      userInfo: '',
+      // 角色列表
+      rolesList: '',
+      rolesListValueID: ''
     }
   },
   methods: {
@@ -310,20 +348,48 @@ export default {
       })
     },
     async deleteUser(id) {
-       const confirmResults = await this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+      const confirmResults = await this.$confirm(
+        '此操作将永久删除该文件, 是否继续?',
+        '提示',
+        {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning',
           center: true
-        }).catch(err => err)
-        if (confirmResults === 'confirm') {
-          const { data: res } = await this.$http.delete('users/' + id);
-          console.log(res)
-          if (res.meta.status === 200) {
-            this.$message.success('删除成功')
-            this.getUserInfo()
-          }
         }
+      ).catch(err => err)
+      if (confirmResults === 'confirm') {
+        const { data: res } = await this.$http.delete('users/' + id)
+        if (res.meta.status === 200) {
+          this.$message.success('删除成功')
+          this.getUserInfo()
+        }
+      }
+    },
+    // 设置用户提示框
+    async setUserEditDialogVistible(user) {
+      const { data: allRoles } = await this.$http.get('roles')
+      if (allRoles.meta.status !== 200) {
+        return this.$message.error('获取数据失败')
+      }
+      this.rolesList = allRoles.data;
+      this.userInfo = user;
+      this.userEditdialogVisible = true
+    },
+     // 分配用户角色
+    async userEditdialogSub() {
+      this.userEditdialogVisible = false;
+      const { data: msg } = await this.$http.put(`users/${this.userInfo.id}/role`, { rid: this.rolesListValueID })
+      if (msg.meta.status !== 200) {
+        this.$message.error('设置角色失败')
+      } else if (msg.meta.status === 200) {
+        this.$message.success('设置角色成功')
+      }
+    },
+    // 清空上次选择角色
+    cleanRolesList() {
+      this.rolesList = ''
+      this.rolesListValue = ''
     }
   },
   mounted() {
