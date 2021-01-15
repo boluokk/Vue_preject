@@ -384,6 +384,7 @@ export default {
         this.$message.error('设置角色失败')
       } else if (msg.meta.status === 200) {
         this.$message.success('设置角色成功')
+        this.getUserInfo();
       }
     },
     // 清空上次选择角色
