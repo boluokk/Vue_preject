@@ -15,14 +15,23 @@ import 'quill/dist/quill.core.css' // import styles
 import 'quill/dist/quill.snow.css' // for snow theme
 import 'quill/dist/quill.bubble.css' // for bubble theme
 
+// 网页加载时显示的过渡蓝条
+import nProgress from 'nprogress'
+import 'nprogress/nprogress.css'
+
 import axios from 'axios'
-import store from './store'
 // 配置请求的跟路径
 axios.defaults.baseURL = 'http://127.0.0.1:8888/api/private/v1/'
 // 请求token判定
 axios.interceptors.request.use(config => {
+  nProgress.start()
   config.headers.Authorization = window.sessionStorage.getItem('token')
   return config
+})
+
+axios.interceptors.response.use(confirm => {
+  nProgress.done()
+  return confirm
 })
 Vue.prototype.$http = axios
 // 控制台消息提示取消
@@ -52,6 +61,5 @@ Vue.filter('dateFormat', function(orig) {
 
 new Vue({
   router,
-  store,
   render: h => h(App)
 }).$mount('#app')
