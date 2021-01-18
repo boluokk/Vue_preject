@@ -8,7 +8,7 @@
     </el-breadcrumb>
     <!-- 添加角色 -->
     <el-card>
-      <el-button type="primary">添加角色</el-button>
+      <el-button type="primary" @click="showaddUser">添加角色</el-button>
     </el-card>
     <!-- 角色列表信息 -->
     <el-table :data="RolesList" border stripe>
@@ -64,10 +64,18 @@
       <el-table-column label="角色描述" prop="roleDesc"></el-table-column>
       <el-table-column label="操作" width="300px">
         <template slot-scope="scope">
-          <el-button type="primary" size="mini" icon="el-icon-edit"
+          <el-button
+            type="primary"
+            size="mini"
+            icon="el-icon-edit"
+            @click="showeditUser(scope.row)"
             >编辑</el-button
           >
-          <el-button type="warning" size="mini" icon="el-icon-delete"
+          <el-button
+            type="warning"
+            size="mini"
+            icon="el-icon-delete"
+            @click="showDeleteDialog(scope.row.id)"
             >删除</el-button
           >
           <el-button
@@ -95,9 +103,33 @@
       ></el-tree>
       <span slot="footer" class="dialog-footer">
         <el-button @click="RightsdialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="allotRights"
-          >确 定</el-button
-        >
+        <el-button type="primary" @click="allotRights">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 添加角色 -->
+    <el-dialog
+      :title="addOrEdit"
+      :visible.sync="UserdialogVisible"
+      width="50%"
+      @close="addAndEditdialogClose"
+    >
+      <el-form
+        :model="UserruleForm"
+        :rules="UserruleFormrules"
+        ref="UserruleFormRef"
+        label-width="100px"
+      >
+        <el-form-item label="角色名称" prop="roleName">
+          <el-input v-model="UserruleForm.roleName"></el-input>
+        </el-form-item>
+        <el-form-item label="角色描述" prop="roleDesc">
+          <el-input v-model="UserruleForm.roleDesc"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="UserdialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addUser">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -115,7 +147,25 @@ export default {
         label: 'authName'
       },
       TreeArr: [],
-      rightsID: ''
+      rightsID: '',
+      // 添加角色对话框判断值
+      UserdialogVisible: false,
+      UserruleForm: {
+        roleName: '',
+        roleDesc: ''
+      },
+      // 修改还是添加角色
+      addOrEdit: 'add',
+      // 角色ID
+      rolesID: 0,
+      UserruleFormrules: {
+        roleName: [
+          { required: true, message: '请输入角色名称', trigger: 'blur' }
+        ],
+        roleDesc: [
+          { required: true, message: '请输入角色描述', trigger: 'blur' }
+        ]
+      }
     }
   },
   methods: {
@@ -173,9 +223,7 @@ export default {
       if (!roles.children) {
         return arr.push(roles.id)
       }
-      roles.children.forEach(item =>
-        this.getLeafRightsTree(item, arr)
-      )
+      roles.children.forEach(item => this.getLeafRightsTree(item, arr))
     },
     // 角色授权
     async allotRights() {
@@ -185,7 +233,12 @@ export default {
       ]
       const strArrs = arrs.join(',')
       // ！！！！
-      const { data: msg } = await this.$http.post(`roles/${this.rightsID}/rights/`, { rids: strArrs })
+      const { data: msg } = await this.$http.post(
+        `roles/${this.rightsID}/rights/`,
+        {
+          rids: strArrs
+        }
+      )
       if (msg.meta.status !== 200) {
         this.$message.error('更新失败')
       } else {
@@ -193,6 +246,73 @@ export default {
         this.RightsdialogVisible = false
         this.getRolesList()
       }
+    },
+    showaddUser() {
+      this.UserdialogVisible = true
+      this.addOrEdit = '添加角色'
+    },
+    async addUser() {
+      if (this.addOrEdit === '添加角色') {
+        this.$refs.ruleFormRef.validate(vali => {
+          if (!vali) {
+            return this.$message.error('请完成必要的参数填写')
+          }
+        })
+        const { data: res } = await this.$http.post('roles', this.UserruleForm)
+        if (res.meta.status !== 201) {
+          return this.$message.error('添加失败！')
+        }
+        this.$message.success('添加成功')
+        this.$refs.UserruleFormRef.resetFields()
+        this.UserdialogVisible = false
+      } else {
+        const { data: res } = await this.$http.put(
+          `roles/${this.rolesID}`,
+          this.UserruleForm
+        )
+        if (res.meta.status !== 200) {
+          return this.$message.error('修改失败！')
+        }
+        this.$message.success('修改成功')
+        this.UserdialogVisible = false
+      }
+      this.getRolesList()
+      this.$refs.UserruleFormRef.resetFields()
+    },
+    showeditUser(role) {
+      this.UserdialogVisible = true
+      this.UserruleForm.roleName = role.roleName
+      this.UserruleForm.roleDesc = role.roleDesc
+      this.rolesID = role.id
+      this.addOrEdit = '修改角色'
+    },
+    // 表单关闭时间
+    addAndEditdialogClose() {
+      this.$refs.UserruleFormRef.resetFields()
+      this.UserruleForm.roleName = ''
+      this.UserruleForm.roleDesc = ''
+    },
+    // 删除角色
+    async showDeleteDialog(id) {
+      const isOk = await this.$confirm(
+        '此操作将永久删除该文件, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          center: true
+        }
+      ).catch(err => err)
+      if (isOk !== 'confirm') {
+        return this.$message('删除取消')
+      }
+      const { data: res } = await this.$http.delete(`roles/${id}`)
+      if (res.meta.status !== 200) {
+        this.$message.warning('删除失败！')
+      }
+      this.$message.success('删除成功')
+      this.getRolesList()
     }
   },
   created() {

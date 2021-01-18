@@ -45,6 +45,7 @@
               type="primary"
               icon="el-icon-edit"
               size="mini"
+              @click="showEditDialog(scope.row)"
             ></el-button>
             <!-- 删除 -->
             <el-button
@@ -67,6 +68,37 @@
         :total="total"
       >
       </el-pagination>
+      <!-- 编辑商品对话框 -->
+      <el-dialog
+        title="商品编辑"
+        :visible.sync="goodsdialogVisible"
+        width="50%"
+      >
+        <!-- 商品信息编辑表单 -->
+        <el-form
+          :model="goodsruleForm"
+          :rules="goodsrules"
+          ref="goodsruleFormRef"
+          label-width="100px"
+        >
+          <el-form-item label="商品名称" prop="goods_name">
+            <el-input v-model="goodsruleForm.goods_name"></el-input>
+          </el-form-item>
+          <el-form-item label="商品价格" prop="goods_price">
+            <el-input v-model="goodsruleForm.goods_price"></el-input>
+          </el-form-item>
+          <el-form-item label="商品数量" prop="goods_number">
+            <el-input v-model="goodsruleForm.goods_number"></el-input>
+          </el-form-item>
+          <el-form-item label="商品重量" prop="goods_weight">
+            <el-input v-model="goodsruleForm.goods_weight"></el-input>
+          </el-form-item>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="goodsdialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="addGoodsBtn">确 定</el-button>
+        </span>
+      </el-dialog>
     </el-card>
   </div>
 </template>
@@ -84,7 +116,32 @@ export default {
         pagesize: 10
       },
       // 总页数
-      total: 1
+      total: 1,
+      // 商品信息
+      goodsruleForm: {
+        goods_id: 0,
+        goods_name: '',
+        goods_price: 0,
+        goods_number: 0,
+        goods_weight: 0
+      },
+      // 商品表单规则
+      goodsrules: {
+        goods_name: [
+          { required: true, message: '请输入商品名称', trigger: 'blur' }
+        ],
+        goods_price: [
+          { required: true, message: '请输入商品价格', trigger: 'blur' }
+        ],
+        goods_number: [
+          { required: true, message: '请输入商品数量', trigger: 'blur' }
+        ],
+        goods_weight: [
+          { required: true, message: '请输入商品重量', trigger: 'blur' }
+        ]
+      },
+      goodsdialogVisible: false,
+      goodsID: 0
     }
   },
   methods: {
@@ -114,11 +171,55 @@ export default {
       this.getGoodsData()
     },
     // 删除商品
-    delGoodsHandel(item) {
+    async delGoodsHandel(item) {
       console.log(item)
+      const isOk = await this.$confirm(
+        '此操作将永久删除该文件, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          center: true
+        }
+      ).catch(err => err)
+      if (isOk !== 'confirm') {
+        return this.$message('删除取消')
+      }
+      const { data: res } = await this.$http.delete(`goods/${item.goods_id}`)
+      if (res.meta.status !== 200) {
+        this.$message.error('删除失败')
+      }
+      this.$message.success('删除成功')
+      this.getGoodsData()
     },
     addGoods() {
       this.$router.push('/goods/addGoods')
+    },
+    showEditDialog(goods) {
+      this.goodsruleForm.goods_id = goods.goods_id
+      this.goodsruleForm.goods_name = goods.goods_name
+      this.goodsruleForm.goods_price = goods.goods_price
+      this.goodsruleForm.goods_number = goods.goods_number
+      this.goodsruleForm.goods_weight = goods.goods_weight
+      this.goodsdialogVisible = true
+    },
+    // 提交编辑商品信息
+    async addGoodsBtn() {
+      const { data: res } = await this.$http.put(
+        `goods/${this.goodsruleForm.goods_id}`,
+        {
+          goods_name: this.goodsruleForm.goods_name,
+          goods_price: this.goodsruleForm.goods_price,
+          goods_number: this.goodsruleForm.goods_number,
+          goods_weight: this.goodsruleForm.goods_weight
+        }
+      )
+      console.log(res)
+      if (res.meta.status !== 201) {
+        return this.$message.error('编辑提交失败')
+      }
+      this.$message.success('编辑成功')
     }
   },
   created() {

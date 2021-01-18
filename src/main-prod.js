@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router/index.js'
-import './plugins/element.js'
 // 导入图标
 import './assets/font/iconfont.css'
 // 全局样式表
@@ -11,13 +10,8 @@ import TableTree from 'vue-table-with-tree-grid'
 // 编辑器
 import VueQuillEditor from 'vue-quill-editor'
 
-import 'quill/dist/quill.core.css' // import styles
-import 'quill/dist/quill.snow.css' // for snow theme
-import 'quill/dist/quill.bubble.css' // for bubble theme
-
 // 网页加载时显示的过渡蓝条
 import nProgress from 'nprogress'
-import 'nprogress/nprogress.css'
 
 import axios from 'axios'
 // 配置请求的跟路径

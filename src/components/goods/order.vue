@@ -40,12 +40,12 @@
         <el-table-column prop="is_send" label="是否发货"> </el-table-column>
         <el-table-column prop="create_time" label="下单时间"> </el-table-column>
         <el-table-column label="操作">
-          <template>
+          <template slot-scope="scope">
             <el-button
               type="primary"
               size="mini"
               icon="el-icon-edit"
-              @click="orderShowHandel"
+              @click="orderShowHandel(scope.row)"
             ></el-button>
             <el-button
               type="success"
@@ -189,7 +189,7 @@ export default {
       this.getOrderList()
     },
     // 展示 订单地址框
-    orderShowHandel() {
+    orderShowHandel(i) {
       this.showOrderdialogVisible = true
     },
     cityhandleChange() {},

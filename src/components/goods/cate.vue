@@ -39,9 +39,13 @@
           >
           <el-tag type="warning" v-else>三级</el-tag>
         </template>
-        <template slot="opt">
-          <el-button type="primary" size="mini">编辑</el-button>
-          <el-button type="warning" size="mini">删除</el-button>
+        <template slot="opt" slot-scope="scope">
+          <el-button type="primary" size="mini" @click="showeditCate(scope.row)"
+            >编辑</el-button
+          >
+          <el-button type="warning" size="mini" @click="deleteCate(scope.row)"
+            >删除</el-button
+          >
         </template>
       </TableTree>
       <!-- 分页展示 -->
@@ -88,6 +92,27 @@
       <span slot="footer" class="dialog-footer">
         <el-button @click="cateAdddialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="addCate">确 定</el-button>
+      </span>
+    </el-dialog>
+    <!-- 编辑分类对话框 -->
+    <el-dialog title="编辑" :visible.sync="goodsCatedialogVisible" width="50%">
+      <el-form
+        :model="goodsCateruleForm"
+        :rules="goodsCaterules"
+        ref="goodsCateruleForm"
+        label-width="100px"
+        class="demo-ruleForm"
+      >
+        <el-form-item label="分类ID">
+          <el-input v-model="goodsCateruleForm.id" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="活动名称" prop="cat_name">
+          <el-input v-model="goodsCateruleForm.cat_name"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="goodsCatedialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editGoodCate">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -153,7 +178,20 @@ export default {
         children: 'children'
       },
       // 级联返回值
-      setCateKey: []
+      setCateKey: [],
+      // 编辑商品分类对话框开关
+      goodsCatedialogVisible: false,
+      // 表单数据
+      goodsCateruleForm: {
+        id: '',
+        cat_name: ''
+      },
+      // 表单验证
+      goodsCaterules: {
+        cat_name: [
+          { required: true, message: '请输入分类名称', trigger: 'blur' }
+        ]
+      }
     }
   },
   methods: {
@@ -207,19 +245,60 @@ export default {
         }
         this.$message.success('添加成功')
         this.cateAdddialogVisible = false
-        this.closedCate();
+        this.closedCate()
       })
     },
     closedCate() {
       this.setCateKey = []
       this.CateruleForm = {}
+    },
+    showeditCate(goodsCate) {
+      console.log(goodsCate)
+      this.goodsCateruleForm.id = goodsCate.cat_id
+      this.goodsCateruleForm.cat_name = goodsCate.cat_name
+      this.goodsCatedialogVisible = true
+    },
+    async deleteCate(goodsCate) {
+      const result = await this.$confirm(
+        '此操作将永久删除该文件, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch(err => err)
+      if (result !== 'confirm') {
+        this.$message('取消成功')
+      }
+      const { data: res } = await this.$http.delete(
+        `categories/${goodsCate.cat_id}`
+      )
+      if (res.meta.status !== 200) {
+        return this.$message.error('删除失败')
+      }
+      this.$message.success('删除成功')
+      this.getCateInfo()
+    },
+    async editGoodCate() {
+      const { data: res } = await this.$http.put(
+        `categories/${this.goodsCateruleForm.id}`,
+        {
+          cat_name: this.goodsCateruleForm.cat_name
+        }
+      )
+      if (res.meta.status !== 200) {
+        return this.$message.error('更新失败！')
+      }
+      this.$message.success('更新成功')
+      this.goodsCatedialogVisible = false
+      this.getCateInfo()
     }
   },
   created() {
     this.getCateInfo()
   },
-  computed: {
-  }
+  computed: {}
 }
 </script>
 

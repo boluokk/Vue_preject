@@ -14,6 +14,7 @@ module.exports = {
         styleLibraryName: 'theme-chalk'
       }
     ],
-    ...prodPlugin
+    ...prodPlugin,
+    '@babel/plugin-syntax-dynamic-import'
   ]
 }
